@@ -1,0 +1,38 @@
+name: 'dbt_project'
+version: '1.0.0'
+
+profile: 'dbt_project'
+
+model-paths: ["models"]
+analysis-paths: ["analyses"]
+test-paths: ["tests"]
+seed-paths: ["seeds"]
+macro-paths: ["macros"]
+snapshot-paths: ["snapshots"]
+
+clean-targets:
+  - "target"
+  - "dbt_packages"
+
+models:
+  dbt_project:
+
+    # Staging layer → Bronze
+    staging:
+      +schema: "silver"
+      +materialized: view
+
+    # Intermediate layer → Silver
+    intermediate:
+      +schema: "silver"
+      +materialized: table
+
+    # Marts layer → Gold
+    marts:
+      +schema: "gold"
+      +materialized: table
+#
+#      # Optional: subfolder for incremental fact tables
+#      fact_tables:
+#        +materialized: incremental
+#        +on_schema_change: append_new_columns

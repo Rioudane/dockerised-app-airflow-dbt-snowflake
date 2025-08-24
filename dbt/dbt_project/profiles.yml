@@ -1,0 +1,13 @@
+dbt_project:
+  target: snowflake  
+  outputs:
+    snowflake:
+      type: snowflake
+      account: WL39804.eu-west-3.aws
+      user: AITADDIABDELGHAFOUR
+      password: 4yAChJJeEHYCmp7
+      role: LOADER
+      database: MYDB
+      warehouse: MEDIDCAL
+      schema: BRONZE
+      threads: 1

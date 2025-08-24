@@ -1,0 +1,32 @@
+version: 2
+
+sources:
+  - name: snowflake
+    database: MYDB
+    schema: BRONZE
+    tables:
+      - name: raw_orders
+        quoting:
+          identifier: true
+          column: true
+      - name: raw_country
+        quoting:
+          identifier: true
+      - name: raw_products
+        quoting:
+          identifier: true
+          column: true
+      - name: raw_products_category
+        quoting:
+          identifier: true
+      - name: raw_products_subcategory
+        quoting:
+          identifier: true
+      - name: raw_customers
+        quoting:
+          identifier: true
+          column: true
+      - name: raw_order_details
+        quoting:
+          identifier: true
+          column: true

@@ -1,0 +1,24 @@
+aws:
+  accessKeyId: ${AWS_ACCESS_KEY_ID}
+  secretAccessKey: ${AWS_SECRET_ACCESS_KEY}
+  region: ${AWS_REGION}
+  bucket:
+    name: ${AWS_BUCKET_NAME}
+
+snowflake:
+  account: ${SNOWFLAKE_ACCOUNT}
+  schema: ${SNOWFLAKE_SCHEMA}
+  database.name: ${SNOWFLAKE_DATABASE}
+  warehouse: ${SNOWFLAKE_WAREHOUSE}
+  username: ${SNOWFLAKE_USER}
+  password: ${SNOWFLAKE_PASSWORD}
+  url: jdbc:snowflake://${snowflake.account}.snowflakecomputing.com/?db=${snowflake.database.name}&schema=${snowflake.schema}&warehouse=${snowflake.warehouse}
+
+spring:
+  datasource:
+    url: ${snowflake.url}
+    driver-class-name: net.snowflake.client.jdbc.SnowflakeDriver
+
+  profiles:
+    active: ${ACTIVE_PROFILE:dev}
+

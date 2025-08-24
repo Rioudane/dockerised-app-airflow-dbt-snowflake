@@ -1,0 +1,10 @@
+**/.git
+**/README.md
+**/LICENSE
+**/.vscode
+**/.idea
+**/.env
+**/dist
+**/.editorconfig
+**/.mvn
+**/k8s

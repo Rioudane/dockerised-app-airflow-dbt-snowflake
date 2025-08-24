@@ -1,0 +1,144 @@
+services:
+  airflow-webserver:
+    build: ./airflow
+    container_name: etl_ui_airflow_webserver
+    environment:
+      AIRFLOW__CORE__LOAD_EXAMPLES: "false"
+      AIRFLOW__CORE__EXECUTOR: "LocalExecutor"
+      AIRFLOW__LOGGING__REMOTE_LOGGING: "False"
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: "postgresql+psycopg2://postgres:postgres@postgres:5432/airflow"
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
+      AWS_REGION: ${AWS_REGION}
+      SNOWFLAKE_USER: ${SNOWFLAKE_USER}
+      SNOWFLAKE_PASSWORD: ${SNOWFLAKE_PASSWORD}
+      SNOWFLAKE_ACCOUNT: ${SNOWFLAKE_ACCOUNT}
+      SNOWFLAKE_DATABASE: ${SNOWFLAKE_DATABASE}
+      SNOWFLAKE_SCHEMA: ${SNOWFLAKE_SCHEMA}
+      SNOWFLAKE_WAREHOUSE: ${SNOWFLAKE_WAREHOUSE}
+      AWS_ROLE_ARN: ${AWS_ROLE_ARN}
+      AWS_ALLOWED_LOCATIONS: ${AWS_ALLOWED_LOCATIONS}
+      AWS_EXTERNAL_ID: ${AWS_EXTERNAL_ID}
+      AIRFLOW_CONN_SNOWFLAKE_DEFAULT: >-
+        snowflake://${SNOWFLAKE_USER}:${SNOWFLAKE_PASSWORD}@${SNOWFLAKE_ACCOUNT}/${SNOWFLAKE_DATABASE}/${SNOWFLAKE_SCHEMA}?warehouse=${SNOWFLAKE_WAREHOUSE}
+
+    ports:
+      - "8082:8080"
+    env_file:
+      - .env
+    volumes:
+      - ./dags:/opt/airflow/dags
+      - ./dbt/dbt_meds:/opt/airflow/dbt
+      - ./logs:/opt/airflow/logs
+      - ./plugins:/opt/airflow/plugins
+      - /var/run/docker.sock:/var/run/docker.sock
+    command: >
+      bash -c "
+        airflow db migrate &&
+        airflow users create --username admin --firstname Admin --lastname User --role Admin --email admin@example.com --password admin || true &&
+        airflow webserver
+      "
+    depends_on:
+      - postgres
+    healthcheck:
+      test: [ "CMD-SHELL", "[ -f /opt/airflow/airflow-webserver.pid ]" ]
+      interval: 30s
+      timeout: 30s
+      retries: 3
+    networks:
+      - etl_angular
+
+  airflow-scheduler:
+    build: ./airflow
+    container_name: etl_ui_airflow_scheduler
+    environment:
+      AIRFLOW__CORE__LOAD_EXAMPLES: "false"
+      AIRFLOW__CORE__EXECUTOR: "LocalExecutor"
+      AIRFLOW__LOGGING__REMOTE_LOGGING: "False"
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: "postgresql+psycopg2://postgres:postgres@postgres:5432/airflow"
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
+      AWS_REGION: ${AWS_REGION}
+      SNOWFLAKE_USER: ${SNOWFLAKE_USER}
+      SNOWFLAKE_PASSWORD: ${SNOWFLAKE_PASSWORD}
+      SNOWFLAKE_ACCOUNT: ${SNOWFLAKE_ACCOUNT}
+      SNOWFLAKE_DATABASE: ${SNOWFLAKE_DATABASE}
+      SNOWFLAKE_SCHEMA: ${SNOWFLAKE_SCHEMA}
+      SNOWFLAKE_WAREHOUSE: ${SNOWFLAKE_WAREHOUSE}
+      AWS_ROLE_ARN: ${AWS_ROLE_ARN}
+      AWS_ALLOWED_LOCATIONS: ${AWS_ALLOWED_LOCATIONS}
+      AWS_EXTERNAL_ID: ${AWS_EXTERNAL_ID}
+      AIRFLOW_CONN_SNOWFLAKE_DEFAULT: >-
+        snowflake://${SNOWFLAKE_USER}:${SNOWFLAKE_PASSWORD}@${SNOWFLAKE_ACCOUNT}/${SNOWFLAKE_DATABASE}/${SNOWFLAKE_SCHEMA}?warehouse=${SNOWFLAKE_WAREHOUSE}
+
+
+    env_file:
+      - .env
+    volumes:
+      - ./dags:/opt/airflow/dags
+      - ./dbt/dbt_meds:/opt/airflow/dbt
+      - ./logs:/opt/airflow/logs
+      - ./plugins:/opt/airflow/plugins
+      - /var/run/docker.sock:/var/run/docker.sock
+    command: >
+      bash -c "
+        airflow db migrate &&
+        airflow scheduler
+      "
+    depends_on:
+      - airflow-webserver
+      - postgres
+    networks:
+      - etl_angular
+
+  frontend_angular:
+    container_name: etl_ui_angular_container
+    build: ./ETL-UI
+    ports:
+      - 81:80
+    expose:
+      - 81
+    networks:
+      -  etl_angular
+
+  etl_backend:
+    container_name: etl_backend_container
+    build:
+      context: ./backend
+      args:
+        CONTAINER_PORT: 8085
+    restart: unless-stopped
+    expose:
+      - 8085
+    ports:
+      - 8085:8080
+    networks:
+      - etl_angular
+
+  postgres:
+    image: postgres:15
+    restart: always
+    container_name: etl_ui_postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: airflow
+    ports:
+      - "5433:5432"
+    networks:
+      - etl_angular
+
+  dbt:
+    container_name: etl_ui_dbt_container
+    build:
+      context: ./dbt
+      dockerfile: Dockerfile
+    image: dbt-project-image:latest
+    networks:
+      - etl_angular
+    volumes:
+      - ./dbt:/dbt
+networks:
+  etl_angular:
+    name: etl_angular
+    driver: bridge
