@@ -3,11 +3,11 @@ dbt_project:
   outputs:
     snowflake:
       type: snowflake
-      account: WL39804.eu-west-3.aws
-      user: AITADDIABDELGHAFOUR
-      password: 4yAChJJeEHYCmp7
-      role: LOADER
-      database: MYDB
-      warehouse: MEDIDCAL
-      schema: BRONZE
+      account: 
+      user: 
+      password: 
+      role: 
+      database: 
+      warehouse: 
+      schema: 
       threads: 1
